@@ -20,7 +20,7 @@ SSH into the Pi, then:
 ```bash
 # 1. Clone the repo
 sudo mkdir -p /opt
-sudo git clone https://github.com/<your-user>/remote-printouts.git /opt/remote-printouts
+sudo git clone https://github.com/elmica/remote-printouts.git /opt/remote-printouts
 cd /opt/remote-printouts
 
 # 2. Install dependencies and build
