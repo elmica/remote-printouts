@@ -18,12 +18,18 @@ Deploy RTDB rules from [`firebase/database.rules.json`](firebase/database.rules.
 SSH into the Pi, then:
 
 ```bash
-# 1. Clone the repo
+# 1. Create the service user (safe to re-run if it already exists)
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin remote-printouts 2>/dev/null || true
+
+# 2. Clone the repo (sudo creates /opt as root-owned)
 sudo mkdir -p /opt
 sudo git clone https://github.com/elmica/remote-printouts.git /opt/remote-printouts
+
+# 3. Take ownership so npm can write dist/ (root-owned /opt blocks normal users)
+sudo chown -R "$USER:$USER" /opt/remote-printouts
 cd /opt/remote-printouts
 
-# 2. Install dependencies and build
+# 4. Install dependencies and build
 npm ci
 npm run build
 ```
@@ -31,18 +37,17 @@ npm run build
 ## Configure
 
 ```bash
-# 3. Create a dedicated user (if it doesn't exist yet)
-sudo useradd --system --no-create-home --shell /usr/sbin/nologin remote-printouts
+cd /opt/remote-printouts
 
-# 4. Create config directory
+# 5. Create config directory
 sudo mkdir -p /etc/remote-printouts
 sudo chmod 700 /etc/remote-printouts
 
-# 5. Copy your Firebase service account key to the Pi, then:
+# 6. Copy your Firebase service account key to the Pi, then:
 sudo cp /path/to/your-service-account.json /etc/remote-printouts/service-account.json
 sudo chmod 600 /etc/remote-printouts/service-account.json
 
-# 6. Create the environment file
+# 7. Create the environment file
 sudo cp .env.example /etc/remote-printouts/env
 sudo nano /etc/remote-printouts/env
 ```
@@ -56,7 +61,7 @@ JPRINT_BASE_URL=http://localhost:3001
 CLAIM_LEASE_MS=120000
 ```
 
-Give the service user read access to the app and config:
+Give the service user ownership before running under systemd:
 
 ```bash
 sudo chown -R remote-printouts:remote-printouts /opt/remote-printouts
@@ -67,10 +72,10 @@ sudo chmod 640 /etc/remote-printouts/env /etc/remote-printouts/service-account.j
 ## Run as a systemd service
 
 ```bash
-# 7. Install the unit file
+# 8. Install the unit file
 sudo cp deploy/remote-printouts.service /etc/systemd/system/
 
-# 8. Enable and start
+# 9. Enable and start
 sudo systemctl daemon-reload
 sudo systemctl enable remote-printouts
 sudo systemctl start remote-printouts
@@ -100,6 +105,7 @@ cd /opt/remote-printouts
 git pull
 npm ci
 npm run build
+sudo chown -R remote-printouts:remote-printouts /opt/remote-printouts
 sudo systemctl restart remote-printouts
 ```
 
@@ -147,6 +153,7 @@ Supported job types: `escpos`, `zpl`, `escpos-raw`, `batch` — see [`openapi.js
 
 ## Troubleshooting
 
+- **Build fails with EACCES on `/opt/remote-printouts/dist`** — the clone was done with `sudo`, so the folder is root-owned. Run `sudo chown -R "$USER:$USER" /opt/remote-printouts` and retry `npm run build`.
 - **Service won't start** — check env vars: `sudo cat /etc/remote-printouts/env` and confirm the service account path exists.
 - **Printer sync fails** — confirm jprint is running: `curl http://localhost:3001/api/printers`
 - **Jobs not printing** — check logs for claim/print errors; failed jobs stay in `/print/printjobs` with an `error` field.
