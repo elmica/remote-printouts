@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "print": {
+      "printjobs": {
+        "$jobId": {
+          ".read": "auth != null",
+          ".write": "auth != null"
+        }
+      },
+      "printers": {
+        ".read": "auth != null",
+        ".write": false
+      },
+      "update": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    }
+  }
+}

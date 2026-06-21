@@ -1,0 +1,17 @@
+[Unit]
+Description=Firebase RTDB print bridge to jprint
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=remote-printouts
+Group=remote-printouts
+WorkingDirectory=/opt/remote-printouts
+EnvironmentFile=/etc/remote-printouts/env
+ExecStart=/usr/bin/node /opt/remote-printouts/dist/index.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
